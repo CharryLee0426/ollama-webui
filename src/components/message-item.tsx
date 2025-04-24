@@ -21,6 +21,7 @@ interface CodeProps {
 
 export default function MessageItem({ message }: MessageItemProps) {
   const [copied, setCopied] = useState<boolean>(false);
+  const [responseCopied, setResponseCopied] = useState<boolean>(false);
   const [isThinkingOpen, setIsThinkingOpen] = useState<boolean>(false);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
@@ -50,12 +51,20 @@ export default function MessageItem({ message }: MessageItemProps) {
     };
   }, [message.isStreaming, isTimerRunning]);
 
+  // Handle copy button timeout
   useEffect(() => {
     if (copied) {
       const timer = setTimeout(() => setCopied(false), 2000);
       return () => clearTimeout(timer);
     }
   }, [copied]);
+
+  useEffect(() => {
+    if (responseCopied) {
+      const timer = setTimeout(() => setResponseCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [responseCopied]);
 
   // Handle streaming content and thinking detection
   useEffect(() => {
@@ -151,11 +160,17 @@ export default function MessageItem({ message }: MessageItemProps) {
     setCopied(true);
   };
 
+  const copyResponseToClipboard = () => {
+    // Copy only the main content without the thinking part
+    navigator.clipboard.writeText(mainContent);
+    setResponseCopied(true);
+  };
+
   const hasThinking = thinkingContent !== '';
 
   return (
-    <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-      <div className={`${message.role === 'user' ? 'user-message' : 'assistant-message'} max-w-3xl`}>
+    <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} w-full`}>
+      <div className={`${message.role === 'user' ? 'user-message' : 'assistant-message'} max-w-3xl relative w-full`}>
         {message.role === 'user' ? (
           <div>{message.content}</div>
         ) : (
@@ -181,7 +196,10 @@ export default function MessageItem({ message }: MessageItemProps) {
                 </div>
                 
                 {isThinkingOpen && (
-                  <div className="thinking-content mt-2 text-sm text-gray-600 bg-gray-100 p-3 rounded-md border border-gray-200">
+                  <div 
+                    className="thinking-content mt-2 text-sm text-gray-600 bg-gray-100 p-3 rounded-md border border-gray-200 overflow-y-auto"
+                    style={{ maxHeight: '15em' }} /* Approximately 10 lines of text */
+                  >
                     <ReactMarkdown
                       components={{
                         code({ inline, className, children, ...props }: CodeProps) {
@@ -240,77 +258,94 @@ export default function MessageItem({ message }: MessageItemProps) {
             )}
 
             {/* Main Content */}
-            {(!isThinking || mainContent) && (
-              <ReactMarkdown
-                components={{
-                  code({ inline, className, children, ...props }: CodeProps) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    const language = match ? match[1] : '';
-                    const content = String(children).replace(/\n$/, '');
-                    
-                    if (!inline && language) {
-                      return (
-                        <div className="relative">
-                          <div className="absolute right-2 top-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700"
-                              onClick={() => copyToClipboard(content)}
+            <div className="main-content overflow-visible">
+              {(!isThinking || mainContent) && (
+                <ReactMarkdown
+                  components={{
+                    code({ inline, className, children, ...props }: CodeProps) {
+                      const match = /language-(\w+)/.exec(className || '');
+                      const language = match ? match[1] : '';
+                      const content = String(children).replace(/\n$/, '');
+                      
+                      if (!inline && language) {
+                        return (
+                          <div className="relative">
+                            <div className="absolute right-2 top-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700"
+                                onClick={() => copyToClipboard(content)}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <SyntaxHighlighter
+                              style={tomorrow}
+                              language={language}
+                              PreTag="div"
+                              {...props}
                             >
-                              <Copy className="h-3 w-3" />
-                            </Button>
+                              {content}
+                            </SyntaxHighlighter>
                           </div>
-                          <SyntaxHighlighter
-                            style={tomorrow}
-                            language={language}
-                            PreTag="div"
-                            {...props}
-                          >
-                            {content}
-                          </SyntaxHighlighter>
-                        </div>
-                      );
-                    } else if (!inline) {
-                      return (
-                        <div className="relative">
-                          <div className="absolute right-2 top-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700"
-                              onClick={() => copyToClipboard(content)}
+                        );
+                      } else if (!inline) {
+                        return (
+                          <div className="relative">
+                            <div className="absolute right-2 top-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700"
+                                onClick={() => copyToClipboard(content)}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <SyntaxHighlighter
+                              style={tomorrow}
+                              language="text"
+                              PreTag="div"
+                              {...props}
                             >
-                              <Copy className="h-3 w-3" />
-                            </Button>
+                              {content}
+                            </SyntaxHighlighter>
                           </div>
-                          <SyntaxHighlighter
-                            style={tomorrow}
-                            language="text"
-                            PreTag="div"
-                            {...props}
-                          >
-                            {content}
-                          </SyntaxHighlighter>
-                        </div>
+                        );
+                      }
+
+                      return (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
                       );
                     }
+                  }}
+                >
+                  {mainContent}
+                </ReactMarkdown>
+              )}
+              
+              {message.isStreaming && !isThinking && (
+                <div className="h-4 w-4 ml-1 inline-block">
+                  <span className="animate-pulse">|</span>
+                </div>
+              )}
+            </div>
 
-                    return (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
-                  }
-                }}
-              >
-                {mainContent}
-              </ReactMarkdown>
-            )}
-            
-            {message.isStreaming && !isThinking && (
-              <div className="h-4 w-4 ml-1 inline-block">
-                <span className="animate-pulse">▋</span>
+            {/* Copy Response Button */}
+            {mainContent && !message.isStreaming && (
+              <div className="mt-2 flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs py-1 px-2 h-7 text-gray-500 hover:text-gray-700"
+                  onClick={copyResponseToClipboard}
+                >
+                  <Copy className="h-3 w-3 mr-1" />
+                  {responseCopied ? 'Copied!' : 'Copy response'}
+                </Button>
               </div>
             )}
           </div>
