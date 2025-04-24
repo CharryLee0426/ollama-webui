@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { OllamaModel } from '@/types';
+import { ModeToggle } from './mode-toggle';
 
 interface NavbarProps {
   currentModel: string | null;
@@ -19,7 +20,7 @@ interface NavbarProps {
 
 export default function Navbar({ currentModel, models, onModelChange }: NavbarProps) {
   return (
-    <header className="border-b bg-white">
+    <header className="border-b bg-white/70 dark:bg-black/70 backdrop-blur-lg shadow-sm">
       <div className="container h-14 flex items-center px-4 md:px-6">
         <div className="mr-4 flex">
           <a className="flex items-center gap-2 font-semibold" href="#">
@@ -47,6 +48,9 @@ export default function Navbar({ currentModel, models, onModelChange }: NavbarPr
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+        </div>
+        <div className='ml-auto'>
+            <ModeToggle />
         </div>
       </div>
     </header>
