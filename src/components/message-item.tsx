@@ -170,14 +170,14 @@ export default function MessageItem({ message }: MessageItemProps) {
 
   return (
     <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} w-full`}>
-      <div className={`${message.role === 'user' ? 'user-message' : 'assistant-message'} max-w-3xl relative w-full`}>
+      <div className={`${message.role === 'user' ? 'user-message' : 'assistant-message'} max-w-3xl relative w-full bg-card dark:bg-card rounded-lg p-4`}>
         {message.role === 'user' ? (
-          <div>{message.content}</div>
+          <div className="text-foreground">{message.content}</div>
         ) : (
-          <div className="message-content">
+          <div className="message-content text-foreground">
             {/* Timer Display - always shown for assistant messages */}
             {(message.isStreaming || elapsedTime > 0) && (
-              <div className="timer-display text-xs text-gray-400 mb-2">
+              <div className="timer-display text-xs text-muted-foreground mb-2">
                 Generation time: {formatTime(elapsedTime)}
               </div>
             )}
@@ -186,7 +186,7 @@ export default function MessageItem({ message }: MessageItemProps) {
             {hasThinking && (
               <div className="thinking-section mb-4">
                 <div 
-                  className="thinking-header flex items-center cursor-pointer text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 rounded-md transition-colors"
+                  className="thinking-header flex items-center cursor-pointer text-sm text-muted-foreground hover:text-foreground hover:bg-accent p-1 rounded-md transition-colors"
                   onClick={() => setIsThinkingOpen(!isThinkingOpen)}
                 >
                   <ChevronDown 
@@ -197,7 +197,7 @@ export default function MessageItem({ message }: MessageItemProps) {
                 
                 {isThinkingOpen && (
                   <div 
-                    className="thinking-content mt-2 text-sm text-gray-600 bg-gray-100 p-3 rounded-md border border-gray-200 overflow-y-auto"
+                    className="thinking-content mt-2 text-sm text-foreground bg-muted dark:bg-gray-800/50 p-3 rounded-md border border-border dark:border-gray-700 overflow-y-auto"
                     style={{ maxHeight: '15em' }} /* Approximately 10 lines of text */
                   >
                     <ReactMarkdown
@@ -274,7 +274,7 @@ export default function MessageItem({ message }: MessageItemProps) {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700"
+                                className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700 dark:bg-gray-700 dark:bg-opacity-60 dark:hover:bg-gray-600"
                                 onClick={() => copyToClipboard(content)}
                               >
                                 <Copy className="h-3 w-3" />
@@ -297,7 +297,7 @@ export default function MessageItem({ message }: MessageItemProps) {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700"
+                                className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700 dark:bg-gray-700 dark:bg-opacity-60 dark:hover:bg-gray-600"
                                 onClick={() => copyToClipboard(content)}
                               >
                                 <Copy className="h-3 w-3" />
@@ -329,7 +329,7 @@ export default function MessageItem({ message }: MessageItemProps) {
               
               {message.isStreaming && !isThinking && (
                 <div className="h-4 w-4 ml-1 inline-block">
-                  <span className="animate-pulse">|</span>
+                  <span className="animate-pulse">▋</span>
                 </div>
               )}
             </div>
@@ -340,7 +340,7 @@ export default function MessageItem({ message }: MessageItemProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs py-1 px-2 h-7 text-gray-500 hover:text-gray-700"
+                  className="text-xs py-1 px-2 h-7 text-muted-foreground hover:text-foreground"
                   onClick={copyResponseToClipboard}
                 >
                   <Copy className="h-3 w-3 mr-1" />

@@ -40,7 +40,7 @@ export default function Navbar({ currentModel, models, onModelChange }: NavbarPr
                   <DropdownMenuItem 
                     key={model.name} 
                     onClick={() => onModelChange(model.name)}
-                    className={currentModel === model.name ? "bg-slate-100" : ""}
+                    className={currentModel === model.name ? "bg-slate-100 dark:bg-slate-700" : ""}
                   >
                     {model.name}
                   </DropdownMenuItem>

@@ -127,7 +127,7 @@
 }
 
 .assistant-message {
-  @apply bg-white border rounded-lg p-3 max-w-3xl mr-auto;
+  @apply bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3 max-w-3xl mr-auto;
 }
 
 /* Code blocks */
