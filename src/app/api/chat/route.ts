@@ -90,8 +90,6 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    console.log('Request body:', requestBody);
-
     // Connect to Ollama API running locally
     let ollamaResponse;
     try {

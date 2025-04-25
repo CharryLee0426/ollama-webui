@@ -5,8 +5,10 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { Button } from '@/components/ui/button';
-import { Copy, ChevronDown } from 'lucide-react';
+import { Copy, ChevronDown, User, Bot } from 'lucide-react';
 import { Message } from '@/types';
+import { Avatar } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 interface MessageItemProps {
   message: Message;
@@ -168,38 +170,127 @@ export default function MessageItem({ message }: MessageItemProps) {
 
   const hasThinking = thinkingContent !== '';
 
-  return (
-    <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} w-full`}>
-      <div className={`${message.role === 'user' ? 'user-message' : 'assistant-message'} max-w-3xl relative w-full bg-card dark:bg-card rounded-lg p-4`}>
-        {message.role === 'user' ? (
-          <div className="text-foreground">{message.content}</div>
-        ) : (
-          <div className="message-content text-foreground">
-            {/* Timer Display - always shown for assistant messages */}
-            {(message.isStreaming || elapsedTime > 0) && (
-              <div className="timer-display text-xs text-muted-foreground mb-2">
-                Generation time: {formatTime(elapsedTime)}
-              </div>
-            )}
+  // Format elapsed time as mm:ss.ms
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60000);
+    const seconds = Math.floor((time % 60000) / 1000);
+    const milliseconds = Math.floor((time % 1000) / 10);
+    
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+  };
 
-            {/* Thinking Progress Section - only shown when thinking content exists */}
-            {hasThinking && (
-              <div className="thinking-section mb-4">
-                <div 
-                  className="thinking-header flex items-center cursor-pointer text-sm text-muted-foreground hover:text-foreground hover:bg-accent p-1 rounded-md transition-colors"
-                  onClick={() => setIsThinkingOpen(!isThinkingOpen)}
-                >
-                  <ChevronDown 
-                    className={`h-4 w-4 mr-1 transition-transform ${isThinkingOpen ? 'rotate-180' : ''}`}
-                  />
-                  <span>Thinking progress</span>
+  return (
+    <div className={cn(
+      "flex gap-3 max-w-3xl mx-auto",
+      message.role === 'user' ? "justify-end" : "justify-start"
+    )}>
+      {message.role === 'assistant' && (
+        <Avatar className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+          <Bot className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+        </Avatar>
+      )}
+      
+      <div className={cn(
+        "flex flex-col space-y-2",
+        message.role === 'user' ? "items-end" : "items-start",
+        "max-w-[80%]"
+      )}>
+        <div className={cn(
+          "rounded-lg p-4 w-full",
+          message.role === 'user' 
+            ? "bg-blue-500 text-white rounded-br-none" 
+            : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none"
+        )}>
+          {message.role === 'user' ? (
+            <div>{message.content}</div>
+          ) : (
+            <div className="message-content">
+              {/* Timer Display */}
+              {(message.isStreaming || elapsedTime > 0) && (
+                <div className="timer-display text-xs text-muted-foreground mb-2">
+                  Generation time: {formatTime(elapsedTime)}
                 </div>
-                
-                {isThinkingOpen && (
+              )}
+
+              {/* Thinking Progress Section */}
+              {hasThinking && (
+                <div className="thinking-section mb-4">
                   <div 
-                    className="thinking-content mt-2 text-sm text-foreground bg-muted dark:bg-gray-800/50 p-3 rounded-md border border-border dark:border-gray-700 overflow-y-auto"
-                    style={{ maxHeight: '15em' }} /* Approximately 10 lines of text */
+                    className="thinking-header flex items-center cursor-pointer text-sm text-muted-foreground hover:text-foreground hover:bg-accent p-1 rounded-md transition-colors"
+                    onClick={() => setIsThinkingOpen(!isThinkingOpen)}
                   >
+                    <ChevronDown 
+                      className={`h-4 w-4 mr-1 transition-transform ${isThinkingOpen ? 'rotate-180' : ''}`}
+                    />
+                    <span>Thinking progress</span>
+                  </div>
+                  
+                  {isThinkingOpen && (
+                    <div 
+                      className="thinking-content mt-2 text-sm text-foreground bg-muted dark:bg-gray-900/50 p-3 rounded-md border border-border dark:border-gray-700 overflow-y-auto"
+                      style={{ maxHeight: '15em' }}
+                    >
+                      <ReactMarkdown
+                        components={{
+                          code({ inline, className, children, ...props }: CodeProps) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            const language = match ? match[1] : '';
+                            const content = String(children).replace(/\n$/, '');
+                            
+                            if (!inline && language) {
+                              return (
+                                <div className="relative">
+                                  <SyntaxHighlighter
+                                    style={tomorrow}
+                                    language={language}
+                                    PreTag="div"
+                                    customStyle={{ fontSize: '0.8rem' }}
+                                    {...props}
+                                  >
+                                    {content}
+                                  </SyntaxHighlighter>
+                                </div>
+                              );
+                            } else if (!inline) {
+                              return (
+                                <div className="relative">
+                                  <SyntaxHighlighter
+                                    style={tomorrow}
+                                    language="text"
+                                    PreTag="div"
+                                    customStyle={{ fontSize: '0.8rem' }}
+                                    {...props}
+                                  >
+                                    {content}
+                                  </SyntaxHighlighter>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            );
+                          }
+                        }}
+                      >
+                        {thinkingContent}
+                      </ReactMarkdown>
+                      {isThinking && message.isStreaming && (
+                        <div className="h-4 w-4 ml-1 inline-block">
+                          <span className="animate-pulse">▋</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Main Content */}
+              <div className="main-content overflow-visible">
+                {(!isThinking || mainContent) && (
+                  <div className="prose dark:prose-invert max-w-none">
                     <ReactMarkdown
                       components={{
                         code({ inline, className, children, ...props }: CodeProps) {
@@ -210,11 +301,20 @@ export default function MessageItem({ message }: MessageItemProps) {
                           if (!inline && language) {
                             return (
                               <div className="relative">
+                                <div className="absolute right-2 top-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700 dark:bg-gray-700 dark:bg-opacity-60 dark:hover:bg-gray-600"
+                                    onClick={() => copyToClipboard(content)}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
                                 <SyntaxHighlighter
                                   style={tomorrow}
                                   language={language}
                                   PreTag="div"
-                                  customStyle={{ fontSize: '0.8rem' }}
                                   {...props}
                                 >
                                   {content}
@@ -224,11 +324,20 @@ export default function MessageItem({ message }: MessageItemProps) {
                           } else if (!inline) {
                             return (
                               <div className="relative">
+                                <div className="absolute right-2 top-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700 dark:bg-gray-700 dark:bg-opacity-60 dark:hover:bg-gray-600"
+                                    onClick={() => copyToClipboard(content)}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
                                 <SyntaxHighlighter
                                   style={tomorrow}
                                   language="text"
                                   PreTag="div"
-                                  customStyle={{ fontSize: '0.8rem' }}
                                   {...props}
                                 >
                                   {content}
@@ -245,121 +354,42 @@ export default function MessageItem({ message }: MessageItemProps) {
                         }
                       }}
                     >
-                      {thinkingContent}
+                      {mainContent}
                     </ReactMarkdown>
-                    {isThinking && message.isStreaming && (
-                      <div className="h-4 w-4 ml-1 inline-block">
-                        <span className="animate-pulse">▋</span>
-                      </div>
-                    )}
+                  </div>
+                )}
+                
+                {message.isStreaming && !isThinking && (
+                  <div className="h-4 w-4 ml-1 inline-block">
+                    <span className="animate-pulse">▋</span>
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Main Content */}
-            <div className="main-content overflow-visible">
-              {(!isThinking || mainContent) && (
-                <ReactMarkdown
-                  components={{
-                    code({ inline, className, children, ...props }: CodeProps) {
-                      const match = /language-(\w+)/.exec(className || '');
-                      const language = match ? match[1] : '';
-                      const content = String(children).replace(/\n$/, '');
-                      
-                      if (!inline && language) {
-                        return (
-                          <div className="relative">
-                            <div className="absolute right-2 top-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700 dark:bg-gray-700 dark:bg-opacity-60 dark:hover:bg-gray-600"
-                                onClick={() => copyToClipboard(content)}
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <SyntaxHighlighter
-                              style={tomorrow}
-                              language={language}
-                              PreTag="div"
-                              {...props}
-                            >
-                              {content}
-                            </SyntaxHighlighter>
-                          </div>
-                        );
-                      } else if (!inline) {
-                        return (
-                          <div className="relative">
-                            <div className="absolute right-2 top-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 bg-gray-800 bg-opacity-60 text-white hover:bg-gray-700 dark:bg-gray-700 dark:bg-opacity-60 dark:hover:bg-gray-600"
-                                onClick={() => copyToClipboard(content)}
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <SyntaxHighlighter
-                              style={tomorrow}
-                              language="text"
-                              PreTag="div"
-                              {...props}
-                            >
-                              {content}
-                            </SyntaxHighlighter>
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <code className={className} {...props}>
-                          {children}
-                        </code>
-                      );
-                    }
-                  }}
-                >
-                  {mainContent}
-                </ReactMarkdown>
-              )}
-              
-              {message.isStreaming && !isThinking && (
-                <div className="h-4 w-4 ml-1 inline-block">
-                  <span className="animate-pulse">▋</span>
+              {/* Copy Response Button */}
+              {mainContent && !message.isStreaming && (
+                <div className="mt-2 flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs py-1 px-2 h-7 text-muted-foreground hover:text-foreground"
+                    onClick={copyResponseToClipboard}
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    {responseCopied ? 'Copied!' : 'Copy response'}
+                  </Button>
                 </div>
               )}
             </div>
-
-            {/* Copy Response Button */}
-            {mainContent && !message.isStreaming && (
-              <div className="mt-2 flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs py-1 px-2 h-7 text-muted-foreground hover:text-foreground"
-                  onClick={copyResponseToClipboard}
-                >
-                  <Copy className="h-3 w-3 mr-1" />
-                  {responseCopied ? 'Copied!' : 'Copy response'}
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
+      
+      {message.role === 'user' && (
+        <Avatar className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+          <User className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+        </Avatar>
+      )}
     </div>
   );
-}
-
-// Format elapsed time as mm:ss.ms
-function formatTime(time: number) {
-  const minutes = Math.floor(time / 60000);
-  const seconds = Math.floor((time % 60000) / 1000);
-  const milliseconds = Math.floor((time % 1000) / 10);
-  
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
 }

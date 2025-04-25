@@ -30,14 +30,15 @@ export default function Home() {
     fetchModels();
   }, []);
 
-  const handleSendMessage = async (content: string) => {
-    if (!content.trim() || !currentModel) return;
+  const handleSendMessage = async (content: string, images?: string[]) => {
+    if ((!content.trim() && (!images || images.length === 0)) || !currentModel) return;
     
     // Add user message
     const userMessage: Message = {
       id: Date.now(),
       role: 'user',
       content,
+      images: images
     };
     
     setMessages(prev => [...prev, userMessage]);
@@ -61,6 +62,7 @@ export default function Home() {
         body: JSON.stringify({
           model: currentModel,
           messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
+          images: images,
         }),
       });
 
