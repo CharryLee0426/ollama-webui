@@ -29,24 +29,26 @@ export default function InputForm({ onSendMessage, isLoading }: InputFormProps) 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative">
-      <Textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Message Ollama..."
-        className="pr-12 resize-none"
-        rows={1}
-        disabled={isLoading}
-      />
-      <Button
-        type="submit"
-        size="icon"
-        disabled={!input.trim() || isLoading}
-        className="absolute right-2 top-1/2 transform -translate-y-1/2"
-      >
-        <Send className="h-4 w-4" />
-      </Button>
-    </form>
+    <div className="w-full flex justify-center">
+      <form onSubmit={handleSubmit} className="relative w-full md:w-[60%]">
+        <Textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Message Ollama..."
+          className="pr-12 resize-none"
+          rows={1}
+          disabled={isLoading}
+        />
+        <Button
+          type="submit"
+          size="icon"
+          disabled={!input.trim() || isLoading}
+          className="absolute right-2 top-1/2 transform -translate-y-1/2"
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </form>
+    </div>
   );
 }

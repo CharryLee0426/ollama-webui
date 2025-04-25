@@ -123,7 +123,9 @@
 
 /* Message bubbles */
 .user-message {
-  @apply bg-green-500 text-white rounded-lg p-3 max-w-3xl ml-auto;
+  @apply bg-green-500 text-white rounded-lg p-3 ml-auto;
+  max-width: min(90%, 36rem);  /* Uses the smaller of 90% or 36rem (3xl) */
+  width: fit-content;  /* Make the width fit the content */
 }
 
 .assistant-message {
